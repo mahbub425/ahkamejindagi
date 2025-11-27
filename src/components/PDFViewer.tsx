@@ -27,7 +27,8 @@ export const PDFViewer = ({ fileUrl }: PDFViewerProps) => {
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [searchPage, setSearchPage] = useState<string>('');
-  const [scale, setScale] = useState<number>(1.2);
+  const [scale, setScale] = useState<number>(1.0);
+  const isMobile = window.innerWidth < 768;
   const [bookmarks, setBookmarks] = useState<BookmarkType[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<string>('toc');
@@ -109,36 +110,36 @@ export const PDFViewer = ({ fileUrl }: PDFViewerProps) => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col h-screen bg-background overflow-hidden touch-none">
       {/* Header */}
-      <header className="h-header border-b border-border bg-card px-6 flex items-center justify-between sticky top-0 z-10 shadow-sm">
-        <div className="flex items-center gap-4">
+      <header className="h-14 md:h-header border-b border-border bg-card px-3 md:px-6 flex items-center justify-between sticky top-0 z-10 shadow-sm">
+        <div className="flex items-center gap-2 md:gap-4 flex-1">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="lg:hidden"
+            className="h-8 w-8 md:h-10 md:w-10"
           >
-            <Menu className="h-5 w-5" />
+            <Menu className="h-4 w-4 md:h-5 md:w-5" />
           </Button>
-          <h1 className="text-xl font-bold text-foreground">আহকামে যিন্দেগী</h1>
+          <h1 className="text-sm md:text-xl font-bold text-foreground truncate">আহকামে যিন্দেগী</h1>
         </div>
-        
-        <div className="flex items-center gap-4">
+
+        <div className="flex items-center gap-2 md:gap-4">
           {/* Search */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 md:gap-2">
             <Input
               type="number"
-              placeholder="পেজ নম্বর..."
+              placeholder="পেজ"
               value={searchPage}
               onChange={(e) => setSearchPage(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              className="w-32"
+              className="w-16 md:w-32 text-xs md:text-sm h-8 md:h-10"
               min={1}
               max={numPages}
             />
-            <Button onClick={handleSearch} variant="secondary" size="icon">
-              <Search className="h-4 w-4" />
+            <Button onClick={handleSearch} variant="secondary" size="icon" className="h-8 w-8 md:h-10 md:w-10">
+              <Search className="h-3 w-3 md:h-4 md:w-4" />
             </Button>
           </div>
 
@@ -147,12 +148,12 @@ export const PDFViewer = ({ fileUrl }: PDFViewerProps) => {
             onClick={toggleBookmark}
             variant={isBookmarked ? "default" : "outline"}
             size="icon"
-            className="relative"
+            className="relative h-8 w-8 md:h-10 md:w-10"
           >
             {isBookmarked ? (
-              <BookmarkCheck className="h-5 w-5" />
+              <BookmarkCheck className="h-4 w-4 md:h-5 md:w-5" />
             ) : (
-              <Bookmark className="h-5 w-5" />
+              <Bookmark className="h-4 w-4 md:h-5 md:w-5" />
             )}
           </Button>
         </div>
@@ -161,7 +162,9 @@ export const PDFViewer = ({ fileUrl }: PDFViewerProps) => {
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar with TOC and Bookmarks */}
         {sidebarOpen && (
-          <aside className="w-sidebar border-r border-border bg-muted/30 overflow-hidden flex flex-col">
+          <aside className="fixed md:relative inset-0 md:inset-auto w-full md:w-sidebar border-r border-border bg-muted/30 md:bg-muted/30 overflow-hidden flex flex-col z-20 md:z-auto">
+            <div className="absolute inset-0 bg-black/50 md:hidden" onClick={() => setSidebarOpen(false)} />
+            <div className="relative w-4/5 max-w-sm md:w-full h-full bg-background md:bg-transparent flex flex-col">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
               <TabsList className="grid w-full grid-cols-2 m-4 mb-0">
                 <TabsTrigger value="toc" className="gap-2">
@@ -219,61 +222,65 @@ export const PDFViewer = ({ fileUrl }: PDFViewerProps) => {
                 )}
               </TabsContent>
             </Tabs>
+            </div>
           </aside>
         )}
 
         {/* PDF Viewer */}
-        <main className="flex-1 overflow-auto">
-          <div className="flex flex-col items-center py-8 px-4">
-            <div className="bg-white shadow-2xl rounded-lg overflow-hidden mb-6">
+        <main className="flex-1 overflow-auto overscroll-none">
+          <div className="flex flex-col items-center py-4 md:py-8 px-2 md:px-4">
+            <div className="bg-white shadow-2xl rounded-lg overflow-hidden mb-4 md:mb-6 w-full max-w-full">
               <Document
                 file={fileUrl}
                 onLoadSuccess={onDocumentLoadSuccess}
                 loading={
-                  <div className="flex items-center justify-center h-[600px] w-[450px]">
+                  <div className="flex items-center justify-center h-[400px] md:h-[600px] w-full md:w-[450px]">
                     <div className="text-center">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                      <p className="text-muted-foreground">লোড হচ্ছে...</p>
+                      <div className="animate-spin rounded-full h-8 w-8 md:h-12 md:w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                      <p className="text-xs md:text-sm text-muted-foreground">লোড হচ্ছে...</p>
                     </div>
                   </div>
                 }
               >
                 <Page
                   pageNumber={pageNumber}
-                  scale={scale}
-                  renderTextLayer={true}
-                  renderAnnotationLayer={true}
+                  scale={isMobile ? Math.min(scale, window.innerWidth / 500) : scale}
+                  width={isMobile ? window.innerWidth - 32 : undefined}
+                  renderTextLayer={false}
+                  renderAnnotationLayer={false}
                 />
               </Document>
             </div>
 
             {/* Navigation Controls */}
-            <div className="flex items-center gap-4 bg-card border border-border rounded-lg p-4 shadow-md">
+            <div className="flex items-center gap-2 md:gap-4 bg-card border border-border rounded-lg p-2 md:p-4 shadow-md w-full max-w-full justify-center">
               <Button
                 onClick={goToPreviousPage}
                 disabled={pageNumber <= 1}
                 variant="outline"
                 size="icon"
+                className="h-10 w-10 md:h-12 md:w-12"
               >
-                <ChevronLeft className="h-5 w-5" />
+                <ChevronLeft className="h-5 w-5 md:h-6 md:w-6" />
               </Button>
-              
-              <div className="text-center min-w-[120px]">
-                <p className="text-sm font-medium text-foreground">
+
+              <div className="text-center min-w-[80px] md:min-w-[120px]">
+                <p className="text-xs md:text-sm font-medium text-foreground">
                   পেজ {pageNumber} / {numPages}
                 </p>
               </div>
-              
+
               <Button
                 onClick={goToNextPage}
                 disabled={pageNumber >= numPages}
                 variant="outline"
                 size="icon"
+                className="h-10 w-10 md:h-12 md:w-12"
               >
-                <ChevronRight className="h-5 w-5" />
+                <ChevronRight className="h-5 w-5 md:h-6 md:w-6" />
               </Button>
 
-              <div className="border-l border-border pl-4 ml-2">
+              <div className="hidden md:flex border-l border-border pl-4 ml-2 items-center">
                 <Button
                   onClick={() => setScale(Math.max(0.5, scale - 0.1))}
                   variant="ghost"
